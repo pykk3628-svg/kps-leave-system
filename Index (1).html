@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ใบลานักเรียน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#edf0f7; --surface:#ffffff; --field:#f7f8fc; --ink:#16213a; --muted:#59658a; --line:#d3d9e8;
+  --accent:#2646d1; --accent-ink:#ffffff;
+  --ok:#17693f; --ok-bg:#dff2e8; --warn:#8a5200; --warn-bg:#fcefd0; --bad:#a8271f; --bad-bg:#fbe3e0;
+  --font-display:'Mali','Sarabun','Noto Sans Thai',sans-serif;
+  --font-body:'Sarabun','Noto Sans Thai',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1424; --surface:#182039; --field:#121a31; --ink:#e8ecf8; --muted:#9ba7c8; --line:#2c3759;
+    --accent:#8aa2ff; --accent-ink:#0e1424;
+    --ok:#6fdba5; --ok-bg:#12352a; --warn:#f1b861; --warn-bg:#3a2c0e; --bad:#ff958b; --bad-bg:#3d1a17;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;
+  padding:20px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.stack{display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
+.eyebrow{margin:0;color:var(--muted);font-weight:500;font-size:15px}
+h1{font-family:var(--font-display);font-size:clamp(28px,6vw,38px);line-height:1.2;margin:0}
+h2{font-family:var(--font-display);font-size:20px;margin:0 0 14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;min-width:0}
+.form{display:flex;flex-direction:column;gap:16px}
+.form h2{margin:0}
+label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:15px;min-width:0}
+input,select,textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0;width:100%}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.8}
+input[readonly]{background:var(--bg);color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{margin:0;color:var(--muted);font-size:14px}
+.err{margin:0;color:var(--bad);background:var(--bad-bg);padding:10px 12px;border-radius:8px;font-size:15px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 18px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:6px 12px;font-size:14px}
+.btn.full{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ฟอร์มใบลา (หัวสีน้ำเงิน) */
+.formcard{padding:0;overflow:hidden}
+.fh{background:var(--accent);color:var(--accent-ink);padding:14px 20px}
+.fh h2{margin:0;color:inherit;font-size:22px}
+.fh p{margin:0;font-size:13px;opacity:.9}
+.fb{display:flex;flex-direction:column;gap:14px;padding:20px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.daysbox{background:var(--bg);border-radius:8px;padding:10px 12px;color:var(--muted);font-size:15px}
+.daysbox b{color:var(--ink)}
+.daysbox.bad{background:var(--bad-bg);color:var(--bad)}
+.evid{border:1px dashed var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.evid>strong{font-size:15px}
+.evid>strong i{color:var(--bad);font-style:normal}
+.drop{border:1px dashed var(--line);border-radius:8px;min-height:84px;padding:12px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.drop.has{border-style:solid}
+.drop img{max-width:100%;max-height:260px;border-radius:8px;border:1px solid var(--line)}
+.autohint{background:var(--ok-bg);color:var(--ok);padding:8px 12px;border-radius:8px;font-size:14px;margin:0}
+.choices{display:flex;flex-direction:column;gap:10px}
+
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap}
+.st-p{background:var(--warn-bg);color:var(--warn)}
+.st-a{background:var(--ok-bg);color:var(--ok)}
+.st-r{background:var(--bad-bg);color:var(--bad)}
+.ty{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.item,.req{padding:14px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.item:first-child,.req:first-child{border-top:0;padding-top:0}
+.row1{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.when,.why,.tnote,.gd{margin:0}
+.when{color:var(--muted);font-size:15px}
+.why{overflow-wrap:anywhere}
+.tnote{font-size:15px;background:var(--field);border-radius:8px;padding:8px 10px}
+.gd{font-size:14px;color:var(--muted)}
+.empty{margin:0;color:var(--muted)}
+.req img{max-width:100%;max-height:320px;border-radius:8px;border:1px solid var(--line)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px;padding:4px 2px}
+.stat{display:flex;flex-direction:column}
+.stat b{font-family:var(--font-display);font-size:30px;line-height:1.2}
+.stat span{font-size:14px;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;max-width:100%}
+.seg button{display:block;padding:8px 14px;border-radius:7px;font:inherit;font-weight:600;font-size:15px;color:var(--muted);background:none;border:0;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar input{flex:1 1 180px;width:auto}
+.pdfbox{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok);border-radius:10px;padding:12px 16px}
+.pdfbox a{color:inherit;font-weight:700}
+.pdfbox .nm{overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:15px}
+th{font-size:14px;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-weight:600;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">เรียน ครูที่ปรึกษา</p>
+      <h1>ใบลานักเรียน</h1>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn sm" id="toTeacher">สำหรับครู</button>
+      <button type="button" class="btn sm" id="toStudent" hidden>สำหรับนักเรียน</button>
+      <button type="button" class="btn sm" id="logout" hidden>ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <!-- นักเรียน: เข้าใช้งาน -->
+  <section id="sLogin" class="card form">
+    <h2>เข้าใช้งาน</h2>
+    <label for="l-key">ชื่อ หรือ เลขที่<input id="l-key" autocomplete="off" maxlength="60" placeholder="เช่น สมชาย ใจดี หรือ 14"></label>
+    <p class="hint">พิมพ์ชื่อหรือเลขที่ ระบบจะเติมชื่อ ห้อง เลขที่ และลาครั้งที่ให้เอง</p>
+    <p id="sLoginErr" class="err" role="alert" hidden></p>
+    <div class="choices" id="choices" hidden></div>
+    <div class="actions"><button type="button" class="btn primary" id="sLoginBtn">เข้าใช้งาน</button></div>
+  </section>
+
+  <!-- นักเรียน: ใบลา -->
+  <section id="sView" class="stack" hidden>
+    <form id="leaveForm" class="card formcard" novalidate>
+      <div class="fh">
+        <h2>ใบลา</h2>
+        <p>กรอกข้อมูลแล้วกดส่ง ครูจะได้รับแจ้งทาง LINE</p>
+      </div>
+      <div class="fb">
+        <p class="autohint" id="autoHint" hidden></p>
+        <div class="g2">
+          <label for="f-count">ลาครั้งที่<input id="f-count" readonly></label>
+          <label for="f-today">วันส่งใบลา<input id="f-today" readonly></label>
+        </div>
+        <label for="f-name">ชื่อ-นามสกุล<input id="f-name" autocomplete="off" maxlength="80"></label>
+        <div class="g2">
+          <label for="f-grade">ห้อง<input id="f-grade" autocomplete="off" maxlength="20" placeholder="เช่น ม.2/3"></label>
+          <label for="f-no">เลขที่<input id="f-no" inputmode="numeric" autocomplete="off" maxlength="3"></label>
+        </div>
+        <div class="g2">
+          <label for="f-start">วันที่เริ่มลา<input type="date" id="f-start"></label>
+          <label for="f-end">วันที่สิ้นสุด<input type="date" id="f-end"></label>
+        </div>
+        <label for="f-type">ประเภทการลา
+          <select id="f-type">
+            <option value="sick">ลาป่วย</option>
+            <option value="personal">ลากิจ</option>
+            <option value="other">ลาอื่น ๆ</option>
+          </select>
+        </label>
+        <label for="f-reason">สาเหตุ<textarea id="f-reason" rows="4" maxlength="500" placeholder="เขียนสั้น ๆ เช่น มีไข้และไปพบแพทย์"></textarea></label>
+        <div class="daysbox" id="daysOut" aria-live="polite">จำนวนวัน: -</div>
+
+        <div class="evid">
+          <strong>รูปภาพประกอบ (ลายเซ็นผู้ปกครอง/ภาพ) <i>จำเป็น</i></strong>
+          <div class="actions">
+            <button type="button" class="btn" id="camBtn">ถ่ายรูป</button>
+            <button type="button" class="btn" id="fileBtn">เลือกรูปจากเครื่อง</button>
+          </div>
+          <input type="file" id="f-cam" accept="image/*" capture="environment" hidden>
+          <input type="file" id="f-file" accept="image/*" hidden>
+          <div class="drop" id="drop">
+            <span id="dropMsg">ยังไม่มีรูปภาพ</span>
+            <img id="photoImg" alt="ตัวอย่างรูปภาพประกอบ" hidden>
+          </div>
+          <button type="button" class="btn full" id="photoDel" hidden>ลบรูปภาพ</button>
+        </div>
+
+        <p id="formErr" class="err" role="alert" hidden></p>
+        <button class="btn primary full" id="submitBtn" type="submit">ส่งใบลา</button>
+        <button class="btn full" id="resetBtn" type="button">ล้างฟอร์ม</button>
+      </div>
+    </form>
+    <section class="card">
+      <h2>ใบลาของฉัน</h2>
+      <p class="hint" id="usedDays" hidden></p>
+      <div id="mine"><p class="empty">กำลังโหลดใบลา...</p></div>
+    </section>
+  </section>
+
+  <!-- ครู: เข้าสู่ระบบ -->
+  <section id="tLogin" class="card form" hidden>
+    <h2>เข้าสู่ระบบครู</h2>
+    <label for="t-pin">รหัสครู<input id="t-pin" type="password" autocomplete="current-password" maxlength="60"></label>
+    <p id="tLoginErr" class="err" role="alert" hidden></p>
+    <div class="actions"><button type="button" class="btn primary" id="tLoginBtn">เข้าสู่ระบบ</button></div>
+  </section>
+
+  <!-- ครู: จัดการใบลา -->
+  <section id="tView" class="stack" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="toolbar">
+      <div class="seg" id="filters">
+        <button type="button" data-f="pending" class="on">รออนุมัติ</button>
+        <button type="button" data-f="today">ลาวันนี้</button>
+        <button type="button" data-f="all">ทั้งหมด</button>
+        <button type="button" data-f="summary">สรุปรายคน</button>
+      </div>
+      <input id="q" type="search" placeholder="ค้นหาชื่อหรือห้อง" aria-label="ค้นหาชื่อหรือห้อง">
+    </div>
+    <div class="actions">
+      <button type="button" class="btn primary" id="pdfList">พิมพ์ PDF รายการนี้</button>
+      <button type="button" class="btn" id="refresh">รีเฟรช</button>
+    </div>
+    <div class="pdfbox" id="pdfBox" hidden>
+      <span>สร้าง PDF แล้ว:</span> <span class="nm" id="pdfName"></span>
+      <a id="pdfDl" href="#">ดาวน์โหลด</a>
+      <a id="pdfOpen" href="#" target="_blank" rel="noopener">เปิดดู</a>
+    </div>
+    <div class="card" id="tList"></div>
+  </section>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var TYPES={sick:'ลาป่วย',personal:'ลากิจ',other:'ลาอื่น ๆ'};
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var S={sid:null,mode:null,leaves:[],confirm:null,photo:null,tk:null,rows:[],filter:'pending',q:'',notes:{},busy:{},reopen:{},photos:{},sending:false,poll:null,pdfUrl:null,choices:[],choiceKey:''};
+
+  function run(fn){
+    var a=[].slice.call(arguments,1);
+    return new Promise(function(res,rej){
+      var r=google.script.run.withSuccessHandler(res).withFailureHandler(function(e){rej(e)});
+      r[fn].apply(r,a);
+    });
+  }
+  function msg(e){return String((e&&e.message)||e||'เกิดข้อผิดพลาด').replace(/^Error:\s*/,'')}
+  function pd(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN}
+  function weekdays(a,b){var x=pd(a),y=pd(b);if(isNaN(x)||isNaN(y)||y<x)return 0;var n=0,span=Math.min(Math.round((y-x)/864e5),400);for(var i=0;i<=span;i++){var d=new Date(x+i*864e5).getUTCDay();if(d!==0&&d!==6)n++}return n}
+  function fd(s){var t=pd(s);return isNaN(t)?'':new Date(t).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})}
+  function range(a,b){return a===b?fd(a):fd(a)+' – '+fd(b)}
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function chip(st){var m={pending:['รออนุมัติ','st-p'],approved:['✓ อนุมัติแล้ว','st-a'],rejected:['✕ ไม่อนุมัติ','st-r']}[st]||['รออนุมัติ','st-p'];return '<span class="chip '+m[1]+'">'+m[0]+'</span>'}
+  var toastT;
+  function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},3200)}
+  function setErr(id,m){var e=$(id);e.textContent=m||'';e.hidden=!m}
+
+  function show(v){
+    ['sLogin','sView','tLogin','tView'].forEach(function(id){$(id).hidden=id!==v});
+    var inT=v==='tLogin'||v==='tView',loggedIn=v==='sView'||v==='tView';
+    $('toTeacher').hidden=inT;$('toStudent').hidden=!inT;$('logout').hidden=!loggedIn;
+    if(v!=='tView'&&S.poll){clearInterval(S.poll);S.poll=null}
+  }
+
+  /* ----- นักเรียน ----- */
+  function updateDays(){
+    var a=$('f-start').value,b=$('f-end').value,box=$('daysOut');
+    box.classList.remove('bad');
+    if(!a||!b){box.innerHTML='จำนวนวัน: -';return}
+    if(pd(b)<pd(a)){box.classList.add('bad');box.textContent='วันที่สิ้นสุดต้องไม่ก่อนวันเริ่มลา';return}
+    var n=weekdays(a,b);
+    if(!n){box.classList.add('bad');box.textContent='ช่วงนี้เป็นวันเสาร์–อาทิตย์ทั้งหมด ไม่ต้องยื่นใบลา';return}
+    box.innerHTML='จำนวนวัน: <b>'+n+' วัน</b> (นับเฉพาะวันเรียน ไม่รวมเสาร์–อาทิตย์)';
+  }
+
+  function applySession(r,rawKey){
+    S.sid=r.sid;S.mode=r.mode;S.leaves=r.leaves;
+    $('f-count').value=r.nextCount;
+    var u=$('usedDays');
+    u.hidden=!(r.usedDays>0);
+    u.textContent='วันลาที่อนุมัติแล้วรวม '+r.usedDays+' วัน';
+    renderMine();
+  }
+  function fillForm(r,rawKey){
+    var auto=r.mode==='roster';
+    ['f-name','f-grade','f-no'].forEach(function(id){$(id).readOnly=auto});
+    var h=$('autoHint');
+    if(auto){
+      $('f-name').value=r.profile.name;$('f-grade').value=r.profile.grade;$('f-no').value=r.profile.no;
+      h.textContent='เติมชื่อ ห้อง เลขที่ และลาครั้งที่ให้อัตโนมัติจากรายชื่อนักเรียน';
+      h.hidden=false;
+    }else{
+      var p={};
+      try{p=JSON.parse(localStorage.getItem('leave_profile')||'{}')||{}}catch(e){}
+      $('f-name').value=p.name||(/^\d{1,3}$/.test(rawKey)?'':rawKey);
+      $('f-grade').value=p.grade||'';
+      $('f-no').value=p.no||(/^\d{1,3}$/.test(rawKey)?rawKey:'');
+      h.textContent='ครูยังไม่ได้ใส่รายชื่อนักเรียนในระบบ กรอกชื่อ ห้อง เลขที่ เอง';
+      h.hidden=false;
+    }
+  }
+
+  async function studentLogin(key,grade){
+    var raw=(key||$('l-key').value).trim();
+    setErr('sLoginErr','');$('choices').hidden=true;
+    if(!raw)return setErr('sLoginErr','พิมพ์ชื่อหรือเลขที่ก่อน');
+    $('sLoginBtn').disabled=true;
+    try{
+      var r=await run('studentLogin',raw,grade||'');
+      if(r.mode==='choose'){showChoices(r,raw)}
+      else{
+        try{localStorage.setItem('leave_key',$('l-key').value.trim()||raw)}catch(e){}
+        applySession(r,raw);fillForm(r,raw);show('sView');
+      }
+    }catch(e){setErr('sLoginErr',msg(e))}
+    $('sLoginBtn').disabled=false;
+  }
+  function showChoices(r,raw){
+    S.choices=r.choices;S.choiceKey=raw;
+    $('choices').innerHTML='<p class="hint">พบมากกว่าหนึ่งคน เลือกให้ตรงกับคุณ</p>'
+      +r.choices.map(function(c,i){return '<button type="button" class="btn" data-ch="'+i+'">'+(c.name?esc(c.name)+' · ':'')+'ห้อง '+esc(c.grade)+'</button>'}).join('');
+    $('choices').hidden=false;
+  }
+  async function reloadMine(){
+    try{var r=await run('studentSession',S.sid);applySession(r)}catch(e){toast(msg(e))}
+  }
+  function renderMine(){
+    var el=$('mine');
+    if(!S.leaves.length){el.innerHTML='<p class="empty">ยังไม่มีใบลา กรอกใบลาด้านบนเพื่อส่งใบลาฉบับแรก</p>';return}
+    el.innerHTML=S.leaves.map(function(it){
+      var act='';
+      if(it.status==='pending'){
+        act=S.confirm===it.id
+          ?'<div class="actions"><button class="btn bad sm" data-wyes="'+esc(it.id)+'">ยืนยันถอนใบลา</button><button class="btn sm" data-wno="1">ไม่ถอน</button></div>'
+          :'<div class="actions"><button class="btn sm" data-w="'+esc(it.id)+'">ถอนใบลา</button></div>';
+      }
+      return '<article class="item"><div class="row1"><strong>ครั้งที่ '+esc(it.count||'')+' · '+esc(TYPES[it.type]||it.type)+'</strong>'+chip(it.status)+'</div>'
+        +'<p class="when">'+range(it.start,it.end)+' · '+it.days+' วัน</p>'
+        +(it.note?'<p class="tnote">ครูแจ้ง: '+esc(it.note)+'</p>':'')+act+'</article>';
+    }).join('');
+  }
+
+  function loadPhoto(file){
+    return new Promise(function(res,rej){
+      var url=URL.createObjectURL(file),img=new Image();
+      img.onload=function(){
+        var max=1280,w=img.naturalWidth,h=img.naturalHeight,k=Math.min(1,max/Math.max(w,h));
+        w=Math.round(w*k);h=Math.round(h*k);
+        var c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.8));
+      };
+      img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่หรือเลือกรูปอื่น'))};
+      img.src=url;
+    });
+  }
+  function showPhoto(){
+    var has=!!S.photo;
+    $('photoImg').hidden=!has;$('photoDel').hidden=!has;
+    $('drop').classList.toggle('has',has);
+    $('dropMsg').textContent=has?'แนบรูปภาพแล้ว':'ยังไม่มีรูปภาพ';
+    if(has)$('photoImg').src=S.photo;else $('photoImg').removeAttribute('src');
+  }
+  async function pickPhoto(input){
+    var f=input.files&&input.files[0];input.value='';
+    if(!f)return;
+    setErr('formErr','');
+    try{S.photo=await loadPhoto(f);showPhoto()}catch(e){setErr('formErr',msg(e))}
+  }
+  function clearPhoto(){S.photo=null;showPhoto()}
+  function resetForm(){
+    var t=today();
+    $('f-reason').value='';$('f-start').value=t;$('f-end').value=t;$('f-type').value='sick';
+    clearPhoto();setErr('formErr','');updateDays();
+  }
+
+  async function submitLeave(e){
+    e.preventDefault();
+    if(!S.sid||S.sending)return;
+    var name=$('f-name').value.trim(),grade=$('f-grade').value.trim(),no=$('f-no').value.trim();
+    var start=$('f-start').value,end=$('f-end').value,reason=$('f-reason').value.trim();
+    if(!name)return setErr('formErr','กรอกชื่อ-นามสกุล');
+    if(!grade)return setErr('formErr','กรอกห้อง');
+    if(!/^\d{1,3}$/.test(no))return setErr('formErr','กรอกเลขที่เป็นตัวเลข');
+    if(!start||!end)return setErr('formErr','เลือกวันที่เริ่มลาและวันที่สิ้นสุด');
+    if(pd(end)<pd(start))return setErr('formErr','วันที่สิ้นสุดต้องไม่ก่อนวันเริ่มลา');
+    if(!weekdays(start,end))return setErr('formErr','ช่วงวันที่นี้เป็นวันเสาร์–อาทิตย์ทั้งหมด ไม่ต้องยื่นใบลา');
+    if(!reason)return setErr('formErr','เขียนสาเหตุการลาสั้น ๆ');
+    if(!S.photo)return setErr('formErr','ต้องแนบรูปภาพประกอบก่อนส่งใบลา กด "ถ่ายรูป" หรือ "เลือกรูปจากเครื่อง"');
+    setErr('formErr','');
+    S.sending=true;$('submitBtn').disabled=true;$('submitBtn').textContent='กำลังส่ง...';
+    try{
+      await run('submitLeave',{sid:S.sid,name:name,grade:grade,no:no,type:$('f-type').value,
+        start:start,end:end,reason:reason,photo:S.photo.split(',')[1]});
+      if(S.mode==='manual'){try{localStorage.setItem('leave_profile',JSON.stringify({name:name,grade:grade,no:no}))}catch(e2){}}
+      resetForm();
+      toast('ส่งใบลาแล้ว แจ้งครูเรียบร้อย');
+      await reloadMine();
+    }catch(err){setErr('formErr',msg(err))}
+    S.sending=false;$('submitBtn').disabled=false;$('submitBtn').textContent='ส่งใบลา';
+  }
+
+  /* ----- ครู ----- */
+  async function teacherLogin(){
+    setErr('tLoginErr','');
+    var pin=$('t-pin').value;if(!pin)return setErr('tLoginErr','กรอกรหัสครู');
+    $('tLoginBtn').disabled=true;
+    try{
+      S.tk=await run('teacherLogin',pin);$('t-pin').value='';
+      show('tView');await loadAll();
+      S.poll=setInterval(function(){if(!document.hidden)loadAll(true)},60000);
+    }catch(e){setErr('tLoginErr',msg(e))}
+    $('tLoginBtn').disabled=false;
+  }
+  async function loadAll(quiet){
+    try{S.rows=await run('getAllLeaves',S.tk);renderTeacher()}
+    catch(e){if(!quiet)toast(msg(e));if(/หมดเวลา/.test(msg(e))){S.tk=null;show('tLogin')}}
+  }
+  function renderTeacher(){
+    var rows=S.rows,t=today();
+    var pend=rows.filter(function(r){return r.status==='pending'}).length,away={};
+    rows.forEach(function(r){if(r.status==='approved'&&r.start<=t&&t<=r.end)away[r.name+'|'+r.grade+'|'+r.no]=1});
+    $('stats').innerHTML='<div class="stat"><b>'+pend+'</b><span>รออนุมัติ</span></div>'
+      +'<div class="stat"><b>'+Object.keys(away).length+'</b><span>คนลาวันนี้</span></div>'
+      +'<div class="stat"><b>'+rows.length+'</b><span>ใบลาทั้งหมด</span></div>';
+    var q=S.q.trim().toLowerCase(),el=$('tList');
+    var list=rows.filter(function(r){
+      if(q&&((r.name||'')+' '+(r.grade||'')).toLowerCase().indexOf(q)<0)return false;
+      if(S.filter==='pending')return r.status==='pending';
+      if(S.filter==='today')return r.status==='approved'&&r.start<=t&&t<=r.end;
+      return true;
+    });
+    $('pdfList').textContent=S.filter==='summary'?'พิมพ์ PDF สรุปรายคน':'พิมพ์ PDF รายการนี้ ('+list.length+' ใบ)';
+    if(S.filter==='summary'){el.innerHTML=summary(rows,q);return}
+    if(!list.length){
+      el.innerHTML='<p class="empty">'+({pending:'ไม่มีใบลาที่รออนุมัติ',today:'วันนี้ยังไม่มีนักเรียนที่ได้รับอนุมัติให้ลา',all:'ยังไม่มีใบลาในระบบ'}[S.filter])+'</p>';
+      return;
+    }
+    el.innerHTML=list.map(function(r){
+      var open=r.status==='pending'||S.reopen[r.id],acts;
+      if(open){
+        acts='<input class="note" data-id="'+esc(r.id)+'" placeholder="หมายเหตุถึงนักเรียน (ไม่บังคับ)" maxlength="120" aria-label="หมายเหตุถึงนักเรียน" value="'+esc(S.notes[r.id]!=null?S.notes[r.id]:r.note)+'">'
+          +'<div class="actions"><button class="btn ok" data-act="approved" data-id="'+esc(r.id)+'"'+(S.busy[r.id]?' disabled':'')+'>อนุมัติ</button>'
+          +'<button class="btn bad" data-act="rejected" data-id="'+esc(r.id)+'"'+(S.busy[r.id]?' disabled':'')+'>ไม่อนุมัติ</button></div>';
+      }else{
+        acts=(r.note?'<p class="tnote">หมายเหตุ: '+esc(r.note)+'</p>':'')
+          +'<div class="actions"><button class="btn sm" data-act="reopen" data-id="'+esc(r.id)+'">เปลี่ยนคำตัดสิน</button></div>';
+      }
+      var photo=r.hasPhoto?(S.photos[r.id]?'<img src="'+S.photos[r.id]+'" alt="รูปหลักฐาน">':'<div class="actions"><button class="btn sm" data-act="photo" data-id="'+esc(r.id)+'">ดูรูปหลักฐาน</button></div>'):'';
+      return '<article class="req"><div class="row1"><strong>'+esc(r.name)+' <span class="gd">'+esc(r.grade)+' เลขที่ '+esc(r.no)+'</span></strong>'+chip(r.status)+'</div>'
+        +'<p class="when"><span class="chip ty">'+esc(TYPES[r.type]||r.type)+'</span> ครั้งที่ '+esc(r.count||'')+' · '+range(r.start,r.end)+' · '+r.days+' วัน</p>'
+        +'<p class="why">'+esc(r.reason)+'</p>'
+        +(r.guardian?'<p class="gd">ผู้ปกครอง: '+esc(r.guardian)+'</p>':'')+photo+acts
+        +'<div class="actions"><button class="btn sm" data-act="slip" data-id="'+esc(r.id)+'">พิมพ์ใบลานี้เป็น PDF</button></div></article>';
+    }).join('');
+  }
+  function summary(rows,q){
+    var m={};
+    rows.forEach(function(r){
+      if(r.status!=='approved')return;
+      var k=r.name+'|'+r.grade+'|'+r.no;
+      var x=m[k]||(m[k]={name:r.name,grade:r.grade,no:r.no,sick:0,personal:0,other:0});
+      x[r.type]=(x[r.type]||0)+r.days;
+    });
+    var list=Object.keys(m).map(function(k){return m[k]}).filter(function(x){return !q||((x.name||'')+' '+(x.grade||'')).toLowerCase().indexOf(q)>=0})
+      .sort(function(a,b){return a.name.localeCompare(b.name,'th')});
+    if(!list.length)return '<p class="empty">ยังไม่มีใบลาที่อนุมัติ สรุปจะแสดงเมื่อครูอนุมัติใบลาแรก</p>';
+    return '<div class="tablewrap"><table><thead><tr><th>ชื่อ</th><th>ห้อง / เลขที่</th><th class="n">ป่วย</th><th class="n">กิจ</th><th class="n">อื่น ๆ</th><th class="n">รวม (วัน)</th></tr></thead><tbody>'
+      +list.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.grade)+' / '+esc(x.no)+'</td><td class="n">'+x.sick+'</td><td class="n">'+x.personal+'</td><td class="n">'+x.other+'</td><td class="n"><strong>'+(x.sick+x.personal+x.other)+'</strong></td></tr>'}).join('')+'</tbody></table></div>';
+  }
+  async function decide(id,status){
+    if(S.busy[id])return;
+    S.busy[id]=true;renderTeacher();
+    try{
+      await run('decideLeave',S.tk,id,status,S.notes[id]||'');
+      delete S.notes[id];delete S.reopen[id];
+      toast(status==='approved'?'อนุมัติแล้ว':'บันทึกว่าไม่อนุมัติ');
+      await loadAll(true);
+    }catch(e){toast(msg(e))}
+    delete S.busy[id];renderTeacher();
+  }
+  async function viewPhoto(id,btn){
+    btn.disabled=true;btn.textContent='กำลังโหลดรูป...';
+    try{S.photos[id]=await run('getPhoto',S.tk,id)}catch(e){toast(msg(e))}
+    renderTeacher();
+  }
+
+  /* ----- PDF ----- */
+  function deliverPdf(r){
+    var bin=atob(r.data),u=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    var url=URL.createObjectURL(new Blob([u],{type:'application/pdf'}));
+    if(S.pdfUrl)URL.revokeObjectURL(S.pdfUrl);
+    S.pdfUrl=url;
+    $('pdfName').textContent=r.name;
+    $('pdfDl').href=url;$('pdfDl').setAttribute('download',r.name);
+    $('pdfOpen').href=url;
+    $('pdfBox').hidden=false;
+    toast('สร้าง PDF แล้ว กด "ดาวน์โหลด" ในกรอบสีเขียว');
+    try{$('pdfDl').click()}catch(e){}
+    $('pdfBox').scrollIntoView({block:'nearest'});
+  }
+  async function makePdf(opts,btn){
+    var label=btn&&btn.textContent;
+    if(btn){btn.disabled=true;btn.textContent='กำลังสร้าง PDF...'}
+    try{deliverPdf(await run('makePdf',S.tk,opts))}
+    catch(e){toast(msg(e))}
+    if(btn){btn.disabled=false;btn.textContent=label}
+  }
+
+  /* ----- events ----- */
+  $('sLoginBtn').addEventListener('click',function(){studentLogin()});
+  $('l-key').addEventListener('keydown',function(e){if(e.key==='Enter')studentLogin()});
+  $('choices').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-ch]');if(!b)return;
+    var c=S.choices[+b.dataset.ch];if(!c)return;
+    studentLogin(c.name||S.choiceKey,c.grade);
+  });
+  $('t-pin').addEventListener('keydown',function(e){if(e.key==='Enter')teacherLogin()});
+  $('tLoginBtn').addEventListener('click',teacherLogin);
+  $('toTeacher').addEventListener('click',function(){show(S.tk?'tView':'tLogin');if(S.tk)loadAll(true)});
+  $('toStudent').addEventListener('click',function(){show(S.sid?'sView':'sLogin')});
+  $('logout').addEventListener('click',function(){
+    if(!$('tView').hidden){S.tk=null;S.rows=[];S.photos={};$('pdfBox').hidden=true;show('tLogin')}
+    else{S.sid=null;S.leaves=[];resetForm();$('choices').hidden=true;show('sLogin')}
+  });
+  $('leaveForm').addEventListener('submit',submitLeave);
+  $('resetBtn').addEventListener('click',resetForm);
+  ['f-start','f-end'].forEach(function(id){$(id).addEventListener('input',updateDays)});
+  $('camBtn').addEventListener('click',function(){$('f-cam').click()});
+  $('fileBtn').addEventListener('click',function(){$('f-file').click()});
+  $('f-cam').addEventListener('change',function(){pickPhoto(this)});
+  $('f-file').addEventListener('change',function(){pickPhoto(this)});
+  $('photoDel').addEventListener('click',clearPhoto);
+  $('mine').addEventListener('click',async function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.dataset.w){S.confirm=b.dataset.w;renderMine()}
+    else if(b.dataset.wno){S.confirm=null;renderMine()}
+    else if(b.dataset.wyes){
+      b.disabled=true;S.confirm=null;
+      try{await run('withdrawLeave',S.sid,b.dataset.wyes);toast('ถอนใบลาแล้ว')}catch(err){toast(msg(err))}
+      reloadMine();
+    }
+  });
+  $('filters').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-f]');if(!b)return;
+    S.filter=b.dataset.f;
+    Array.prototype.forEach.call($('filters').querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)});
+    renderTeacher();
+  });
+  $('q').addEventListener('input',function(e){S.q=e.target.value;renderTeacher()});
+  $('refresh').addEventListener('click',function(){loadAll()});
+  $('pdfList').addEventListener('click',function(){
+    makePdf({kind:S.filter==='summary'?'summary':'list',filter:S.filter,q:S.q.trim()},this);
+  });
+  $('tList').addEventListener('input',function(e){var n=e.target.closest('input.note');if(n)S.notes[n.dataset.id]=n.value});
+  $('tList').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-act]');if(!b)return;
+    var id=b.dataset.id,act=b.dataset.act;
+    if(act==='reopen'){S.reopen[id]=true;renderTeacher()}
+    else if(act==='photo')viewPhoto(id,b);
+    else if(act==='slip')makePdf({kind:'slip',id:id},b);
+    else decide(id,act);
+  });
+
+  /* ----- start ----- */
+  var t0=today();$('f-start').value=t0;$('f-end').value=t0;
+  $('f-today').value=new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+  updateDays();showPhoto();
+  try{var k=localStorage.getItem('leave_key');if(k)$('l-key').value=k}catch(e){}
+  show('sLogin');
+})();
+</script>
+</body>
+</html>
